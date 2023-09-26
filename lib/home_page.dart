@@ -13,7 +13,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   PageController pageController = PageController();
-  List<List<String>> answer = List.generate(7, (_) => List.generate(7, (_) => '')); // a, b 선택값이 담겨있는 2차원배열
+  List<List<String>> answer = List.generate(10, (_) => List.generate(7, (_) => '')); // a, b 선택값이 담겨있는 2차원배열
   String mbti = '';
 
   void updateChoice(int row, int column, String value) {
