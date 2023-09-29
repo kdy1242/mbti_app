@@ -3,7 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:mbti_app/util/app_color.dart';
 import 'package:mbti_app/util/app_text_style.dart';
 
-import 'mbti_page.dart';
+import 'test_page.dart';
 
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
@@ -44,7 +44,7 @@ class MainPage extends StatelessWidget {
                 onTap: (){
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MbtiPage())
+                    MaterialPageRoute(builder: (context) => TestPage())
                   );
                 },
                 child: Container(

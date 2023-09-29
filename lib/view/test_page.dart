@@ -5,31 +5,33 @@ import 'package:flutter_svg/svg.dart';
 import 'package:mbti_app/util/app_color.dart';
 import 'package:mbti_app/util/app_text_style.dart';
 import 'package:mbti_app/data/question.dart';
+import 'package:mbti_app/view/result_page.dart';
 
-class MbtiPage extends StatefulWidget {
-  const MbtiPage({super.key});
+class TestPage extends StatefulWidget {
+  const TestPage({super.key});
 
   @override
-  State<MbtiPage> createState() => _MbtiPageeState();
+  State<TestPage> createState() => _TestPageState();
 }
 
-class _MbtiPageeState extends State<MbtiPage> {
+class _TestPageState extends State<TestPage> {
   PageController pageController = PageController();
-  List<List<String>> answer = List.generate(10, (_) => List.generate(7, (_) => '')); // a, b 선택값이 담겨있는 2차원배열
-  String mbti = '';
+  List<List<String>> answer = List.generate(3, (_) => List.generate(7, (_) => '')); // a, b 선택값이 담겨있는 2차원배열
   int progress = 0;
 
   void updateChoice(int row, int column, String value) {
     setState(() {
+      if (progress < questions.length && answer[row][column] == '') {
+        progress++;
+      }
       answer[row][column] = value;
+
       log('$answer', name: 'answer');
+      log('$progress', name: 'progress');
     });
-    if (progress < questions.length) {
-      progress++;
-    }
   }
 
-  void getMbti() {
+  String getMbti() {
     int eScore = 0, iScore = 0, sScore = 0, nScore = 0, tScore = 0, fScore = 0, jScore = 0, pScore = 0;
     String ei, sn, tf, jp;
 
@@ -47,10 +49,7 @@ class _MbtiPageeState extends State<MbtiPage> {
     tf = (tScore > fScore) ? 't' : 'f';
     jp = (jScore > pScore) ? 'j' : 'p';
 
-    mbti = '${ei+sn+tf+jp}';
-    log('$mbti', name: 'mbti');
-
-    setState(() {});
+    return '${ei+sn+tf+jp}';
   }
 
   @override
@@ -99,11 +98,12 @@ class _MbtiPageeState extends State<MbtiPage> {
                 int row = index ~/ 7;
                 int column = index % 7;
                 return index < questions.length ? Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 100),
+                  padding: const EdgeInsets.fromLTRB(30,0,30,100),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      Spacer(),
                       Padding(
                         padding: const EdgeInsets.only(left: 40, bottom: 28),
                         child: SvgPicture.asset(
@@ -113,6 +113,7 @@ class _MbtiPageeState extends State<MbtiPage> {
                       Text(
                         '${index + 1}. ${questions[index]['question']}',
                         style: AppTextStyle.m(fontSize: 18),
+                        textAlign: TextAlign.center,
                       ),
                       Spacer(),
                       Column(
@@ -124,35 +125,55 @@ class _MbtiPageeState extends State<MbtiPage> {
                       )
                     ],
                   ),
-                ) : Column(
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        List notSolveQuestion = [];
-                        for(int i=0; i<answer.length; i++) {
-                          for (int j=0; j<answer[i].length; j++) {
-                            if(answer[i][j] == '') {
-                              int questionNumber = i * answer[i].length + j + 1;
-                              notSolveQuestion.add('$questionNumber번');
-                            };
+                ) : Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 20),
+                        child: SvgPicture.asset(
+                          'assets/image/main_image.svg',
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      GestureDetector(
+                        onTap: (){
+                          List notSolveQuestion = [];
+                          for(int i=0; i<answer.length; i++) {
+                            for (int j=0; j<answer[i].length; j++) {
+                              if(answer[i][j] == '') {
+                                int questionNumber = i * answer[i].length + j + 1;
+                                notSolveQuestion.add('$questionNumber번');
+                              };
+                            }
                           }
-                        }
-                        if (notSolveQuestion.isNotEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('안푼문제: ${notSolveQuestion}'),
-                                duration: Duration(seconds: 3),
-                              )
-                          );
-                        } else {
-                          getMbti();
-                        }
-                        log('$notSolveQuestion', name: 'notSolveQuestion');
-                      },
-                      child: Text('결과보기'),
-                    ),
-                    Text('$mbti'),
-                  ],
+                          if (notSolveQuestion.isNotEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('안푼문제: ${notSolveQuestion}'),
+                                  duration: Duration(seconds: 3),
+                                )
+                            );
+                          } else {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (context) {
+                                return ResultPage(mbti: getMbti());
+                              },
+                            ));
+                          }
+                          log('$notSolveQuestion', name: 'notSolveQuestion');
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 100, vertical: 16),
+                          decoration: BoxDecoration(
+                            color: AppColor.blue,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text('결과 보기', style: AppTextStyle.m(fontSize: 20,color: Colors.white)),
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
