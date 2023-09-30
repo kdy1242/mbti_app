@@ -7,21 +7,22 @@ import 'package:mbti_app/util/app_text_style.dart';
 import 'package:mbti_app/data/question.dart';
 import 'package:mbti_app/view/result_page.dart';
 
-class TestPage extends StatefulWidget {
-  const TestPage({super.key});
+class ScoreTestPage extends StatefulWidget {
+  const ScoreTestPage({super.key});
 
   @override
-  State<TestPage> createState() => _TestPageState();
+  State<ScoreTestPage> createState() => _ScoreTestPageState();
 }
 
-class _TestPageState extends State<TestPage> {
+class _ScoreTestPageState extends State<ScoreTestPage> {
   PageController pageController = PageController();
-  List<List<String>> answer = List.generate(3, (_) => List.generate(7, (_) => '')); // a, b 선택값이 담겨있는 2차원배열
+  List<List<int?>> answer = List.generate(3, (_) => List.generate(7, (_) => null)); // a, b 선택값이 담겨있는 2차원배열
+  int eiScore = 0, snScore = 0, tfScore = 0, jpScore = 0;
   int progress = 0;
 
-  void updateChoice(int row, int column, String value) {
+  void updateChoice(int row, int column, int value) {
     setState(() {
-      if (progress < questions.length && answer[row][column] == '') {
+      if (progress < questions.length && answer[row][column] == null) {
         progress++;
       }
       answer[row][column] = value;
@@ -30,22 +31,23 @@ class _TestPageState extends State<TestPage> {
   }
 
   String getMbti() {
-    int eScore = 0, iScore = 0, sScore = 0, nScore = 0, tScore = 0, fScore = 0, jScore = 0, pScore = 0;
+    int eiMiddleScore = answer.length * 3;
+    int otherMiddleScore = (answer.length*2)*3;
     String ei, sn, tf, jp;
 
     for (int i=0; i<answer.length; i++) {
-      if (answer[i][0] == 'a') eScore++; else iScore++;
-      if (answer[i][1] == 'a' || answer[i][2] == 'a') sScore++; else nScore++;
-      if (answer[i][3] == 'a' || answer[i][4] == 'a') tScore++; else fScore++;
-      if (answer[i][5] == 'a' || answer[i][6] == 'a') jScore++; else pScore++;
+      eiScore += answer[i][0]!;
+      snScore += answer[i][1]! + answer[i][2]!;
+      tfScore += answer[i][3]! + answer[i][4]!;
+      jpScore += answer[i][5]! + answer[i][6]!;
     }
 
-    log('e: $eScore, i: $iScore, s: $sScore, n: $nScore, t: $tScore, f: $fScore, j: $jScore, p:$pScore');
+    log('ei: $eiScore, sn: $snScore, tf: $tfScore, jp:$jpScore');
 
-    ei = (eScore > iScore) ? 'e' : 'i';
-    sn = (sScore > nScore) ? 's' : 'n';
-    tf = (tScore > fScore) ? 't' : 'f';
-    jp = (jScore > pScore) ? 'j' : 'p';
+    ei = (eiMiddleScore > eiScore) ? 'e' : 'i';
+    sn = (otherMiddleScore > snScore) ? 's' : 'n';
+    tf = (otherMiddleScore > tfScore) ? 't' : 'f';
+    jp = (otherMiddleScore > jpScore) ? 'j' : 'p';
 
     return '${ei+sn+tf+jp}';
   }
@@ -68,7 +70,7 @@ class _TestPageState extends State<TestPage> {
             padding: const EdgeInsets.symmetric(horizontal: 15),
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10)
+                  borderRadius: BorderRadius.circular(10)
               ),
               clipBehavior: Clip.antiAlias,
               child: Container(
@@ -96,7 +98,7 @@ class _TestPageState extends State<TestPage> {
                 int row = index ~/ 7;
                 int column = index % 7;
                 return index < questions.length ? Padding(
-                  padding: const EdgeInsets.fromLTRB(30,0,30,100),
+                  padding: const EdgeInsets.fromLTRB(20,0,20,100),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -114,12 +116,40 @@ class _TestPageState extends State<TestPage> {
                         textAlign: TextAlign.center,
                       ),
                       Spacer(),
-                      Column(
+                      Text('A: ${questions[index]['options'][0]}', textAlign: TextAlign.center,),
+                      SizedBox(height: 14),
+                      Text('B: ${questions[index]['options'][1]}', textAlign: TextAlign.center,),
+                      SizedBox(height: 40),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          AnswerButton(row, column, true, questions[index]['options'][0], answer[row][column] == 'a'),
-                          SizedBox(height: 15),
-                          AnswerButton(row, column, false, questions[index]['options'][1], answer[row][column] == 'b'),
+                          Text(
+                            '완전A',
+                            style: AppTextStyle.m(fontSize: 18),
+                          ),
+                          Text(
+                            '완전B',
+                            style: AppTextStyle.m(fontSize: 18),
+                          ),
                         ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(5, (index) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: GestureDetector(
+                              onTap: () {
+                                pageController.nextPage(duration: Duration(milliseconds: 300), curve: Curves.ease);
+                                updateChoice(row, column, index+1);
+                              },
+                              child: CircleAvatar(
+                                radius: (((2-index)*3).abs() + 10) * 2,
+                                backgroundColor: answer[row][column] == index+1 ? AppColor.blue : AppColor.bgBlue,
+                              ),
+                            ),
+                          );
+                        }),
                       )
                     ],
                   ),
@@ -139,7 +169,7 @@ class _TestPageState extends State<TestPage> {
                           List notSolveQuestion = [];
                           for(int i=0; i<answer.length; i++) {
                             for (int j=0; j<answer[i].length; j++) {
-                              if(answer[i][j] == '') {
+                              if(answer[i][j] == null) {
                                 int questionNumber = i * answer[i].length + j + 1;
                                 notSolveQuestion.add('$questionNumber번');
                               };
@@ -177,31 +207,6 @@ class _TestPageState extends State<TestPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget AnswerButton(int row, int column, bool isA, String option, bool isSelected) {
-    return GestureDetector(
-      onTap: (){
-        pageController.nextPage(duration: Duration(milliseconds: 300), curve: Curves.ease);
-        updateChoice(row, column, isA ? 'a': 'b');
-      },
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 35),
-        decoration: BoxDecoration(
-          color: !isSelected ? AppColor.bgGrey : AppColor.bgBlue,
-          border: Border.all(color: !isSelected ? AppColor.borderGrey : AppColor.blue, width: !isSelected ? 1 : 6),
-          borderRadius: BorderRadius.circular(10)
-        ),
-        child: Text(
-          textAlign: TextAlign.center,
-          '${isA ? 'A.' : 'B.'} $option',
-          style: !isSelected
-            ? AppTextStyle.r(fontSize: 16, color: Colors.black)
-            : AppTextStyle.b(fontSize: 16, color: AppColor.blue),
-        ),
       ),
     );
   }
